@@ -24,8 +24,8 @@ func main() {
 		if !ok {
 			panic("invalid input")
 		}
-		winning := slices.DeleteFunc(strings.Split(first, " "), func(s string) bool { return s == "" })
-		actual := slices.DeleteFunc(strings.Split(second, " "), func(s string) bool { return s == "" })
+		winning := deleteEmptyStrings(strings.Split(first, " "))
+		actual := deleteEmptyStrings(strings.Split(second, " "))
 
 		var count int
 		for _, number := range actual {
@@ -96,6 +96,10 @@ func readFile(filename string) string {
 	bytes, err := ioutil.ReadFile(filename)
 	check(err)
 	return strings.TrimSpace(string(bytes))
+}
+
+func deleteEmptyStrings(input []string) []string {
+	return slices.DeleteFunc(input, func(s string) bool { return s == "" })
 }
 
 func arrayToInt(input []string) (output []int) {

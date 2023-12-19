@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"slices"
 	"strconv"
@@ -12,16 +11,45 @@ import (
 
 func main() {
 	lines := readLines("input.txt")
+	timeString := strings.TrimPrefix(lines[0], "Time:")
+	recordString := strings.TrimPrefix(lines[1], "Distance:")
 
 	{
 		fmt.Println("--- Part One ---")
-		fmt.Println(len(lines))
+
+		times := arrayToInt(deleteEmptyStrings(strings.Split(timeString, " ")))
+		records := arrayToInt(deleteEmptyStrings(strings.Split(recordString, " ")))
+
+		if len(times) != len(records) {
+			panic("invalid input")
+		}
+
+		total := 1
+		for index := range times {
+			total *= computeWaysToWin(times[index], records[index])
+		}
+
+		fmt.Println(total)
 	}
 
 	{
 		fmt.Println("--- Part Two ---")
-		fmt.Println()
+		time := toInt(strings.ReplaceAll(timeString, " ", ""))
+		record := toInt(strings.ReplaceAll(recordString, " ", ""))
+		fmt.Println(computeWaysToWin(time, record))
 	}
+}
+
+func computeWaysToWin(time, record int) int {
+	count := 0
+	distance := 0
+	for pressed := 1; pressed < time; pressed++ {
+		distance += (time - pressed) - (pressed - 1)
+		if distance > record {
+			count++
+		}
+	}
+	return count
 }
 
 func readLines(filename string) []string {
@@ -36,27 +64,6 @@ func readLines(filename string) []string {
 		lines = append(lines, scanner.Text())
 	}
 	return lines
-}
-
-func readNumbers(filename string) []int {
-	file, err := os.Open(filename)
-	check(err)
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanWords)
-
-	var numbers []int
-	for scanner.Scan() {
-		numbers = append(numbers, toInt(scanner.Text()))
-	}
-	return numbers
-}
-
-func readFile(filename string) string {
-	bytes, err := ioutil.ReadFile(filename)
-	check(err)
-	return strings.TrimSpace(string(bytes))
 }
 
 func deleteEmptyStrings(input []string) []string {
@@ -81,21 +88,4 @@ func check(err error) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-func sign(x int) int {
-	if x > 0 {
-		return 1
-	}
-	if x < 0 {
-		return -1
-	}
-	return 0
 }
