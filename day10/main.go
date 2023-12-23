@@ -35,20 +35,20 @@ const (
 	east  = "-LF"
 )
 
-func connects(list string, tile rune) bool {
-	return strings.ContainsRune(list, tile)
+func connects(list string, tile byte) bool {
+	return strings.ContainsRune(list, rune(tile))
 }
 
 func main() {
 	lines := readLines("input.txt")
 
 	// Convert to array, so that we can update tiles.
-	grid := make([][]rune, len(lines))
+	grid := make([][]byte, len(lines))
 	for y, line := range lines {
-		grid[y] = []rune(line)
+		grid[y] = []byte(line)
 	}
 
-	at := func(p Position) rune {
+	at := func(p Position) byte {
 		if p.y >= 0 && p.y < len(grid) {
 			if p.x >= 0 && p.x < len(grid[p.y]) {
 				return grid[p.y][p.x]
@@ -158,47 +158,6 @@ func main() {
 		fmt.Println(distance)
 	}
 
-	// Walk along the pipe and assign a direction to flat pipes.
-	// | becomes ^ or v (up or down) and - becomes < or > (left or right).
-	{
-		position, dir := start, "north"
-		for {
-			tile := at(position)
-
-			if tile == '|' {
-				if dir == "north" {
-					grid[position.y][position.x] = '^'
-				} else {
-					grid[position.y][position.x] = 'v'
-				}
-			} else if tile == '-' {
-				if dir == "west" {
-					grid[position.y][position.x] = '<'
-				} else {
-					grid[position.y][position.x] = '>'
-				}
-			}
-
-			if connects(north, tile) && dir != "south" {
-				position.y--
-				dir = "north"
-			} else if connects(south, tile) && dir != "north" {
-				position.y++
-				dir = "south"
-			} else if connects(west, tile) && dir != "east" {
-				position.x--
-				dir = "west"
-			} else if connects(east, tile) && dir != "west" {
-				position.x++
-				dir = "east"
-			}
-
-			if position == start {
-				break
-			}
-		}
-	}
-
 	// Mark and count enclosed tiles.
 	var count int
 	for _, line := range grid {
@@ -211,9 +170,7 @@ func main() {
 			// otherwise we must be inside the pipe.
 			var crossings int
 			for xx := x - 1; xx >= 0; xx-- {
-				if strings.ContainsRune("v7", line[xx]) {
-					crossings++
-				} else if strings.ContainsRune("^F", line[xx]) {
+				if strings.ContainsRune("|F7", rune(line[xx])) {
 					crossings++
 				}
 			}
