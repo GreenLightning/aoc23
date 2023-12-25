@@ -29,87 +29,82 @@ func main() {
 
 	{
 		fmt.Println("--- Part Two ---")
-		fmt.Println()
-	}
-}
 
-func arrangements(first, second string) int {
-	spring := []byte(first)
-	counts := arrayToInt(strings.Split(second, ","))
+		var sum int
+		for _, line := range lines {
+			first, second, ok := strings.Cut(line, " ")
+			if !ok {
+				panic("invalid input")
+			}
 
-	var openDefects, openChoices int
-	for _, count := range counts {
-		openDefects += count
-	}
-	for _, part := range spring {
-		if part == '#' {
-			openDefects--
-		} else if part == '?' {
-			openChoices++
+			sum += arrangements(repeat(first, "?", 5), repeat(second, ",", 5))
 		}
-	}
 
-	return arrangementsImpl(spring, counts, 0, openDefects, openChoices)
+		fmt.Println(sum)
+	}
 }
 
-func arrangementsImpl(spring []byte, counts []int, index int, openDefects, openChoices int) int {
-	if index >= len(spring) {
+type Key struct {
+	Description string
+	List        string
+}
+
+var cache = make(map[Key]int)
+
+func arrangements(description, list string) int {
+	if list == "" {
+		for _, part := range description {
+			if part == '#' {
+				return 0
+			}
+		}
 		return 1
 	}
-	if spring[index] == '.' || spring[index] == '#' {
-		return arrangementsImpl(spring, counts, index+1, openDefects, openChoices)
+
+	key := Key{description, list}
+	if result, ok := cache[key]; ok {
+		return result
 	}
+
+	first, restList, _ := strings.Cut(list, ",")
+	number := toInt(first)
+
 	var result int
-	if openChoices > openDefects {
-		spring[index] = '.'
-		if consistent(spring, counts, index) {
-			result += arrangementsImpl(spring, counts, index+1, openDefects, openChoices-1)
+
+	spring := []byte(description)
+	for start := 0; start+number <= len(spring); start++ {
+		ok := true
+		for i := start; i < start+number; i++ {
+			if spring[i] == '.' {
+				ok = false
+				break
+			}
+		}
+		if start+number < len(spring) {
+			if spring[start+number] == '#' {
+				ok = false
+			}
+		}
+
+		if ok {
+			restSpring := spring[start+number:]
+			if len(restSpring) != 0 {
+				restSpring = restSpring[1:]
+			}
+			result += arrangements(string(restSpring), restList)
+		}
+
+		if spring[start] == '#' {
+			break
 		}
 	}
-	if openDefects > 0 {
-		spring[index] = '#'
-		if consistent(spring, counts, index) {
-			result += arrangementsImpl(spring, counts, index+1, openDefects-1, openChoices-1)
-		}
-	}
-	spring[index] = '?'
+
+	cache[key] = result
 	return result
 }
 
-func consistent(spring []byte, counts []int, index int) (result bool) {
-	countIndex := 0
-	segment := 0
-	for _, part := range spring {
-		if part == '#' {
-			if countIndex >= len(counts) {
-				return false
-			}
-			segment++
-		} else if part == '.' {
-			if segment > 0 {
-				if segment != counts[countIndex] {
-					return false
-				}
-				countIndex++
-				segment = 0
-			}
-		} else {
-			if segment > 0 {
-				if segment > counts[countIndex] {
-					return false
-				}
-			}
-			return true
-		}
-	}
-	if segment > 0 {
-		if segment != counts[countIndex] {
-			return false
-		}
-		countIndex++
-		segment = 0
-	}
-	return countIndex == len(counts)
+func repeat(s string, sep string, count int) string {
+	return strings.TrimSuffix(strings.Repeat(s+sep, count), sep)
 }
 
 func readLines(filename string) []string {
@@ -124,14 +119,6 @@ func readLines(filename string) []string {
 		lines = append(lines, scanner.Text())
 	}
 	return lines
-}
-
-func arrayToInt(input []string) (output []int) {
-	output = make([]int, len(input))
-	for i, text := range input {
-		output[i] = toInt(text)
-	}
-	return output
 }
 
 func toInt(s string) int {
